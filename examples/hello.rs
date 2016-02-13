@@ -21,6 +21,7 @@ fn try_main() -> io::Result<()> {
     let wnd_class = try!(WndClass::new()
         .class_name("Hello")
         .instance(try!(get_module_handle(None)))
+        .cursor(try!(Cursor::load(None, IDC_ARROW)))
         .wnd_proc(wnd_proc)
         .register());
 

@@ -29,3 +29,23 @@ pub trait TryDrop: Sized {
 
     unsafe fn try_drop_inner(&mut self) -> Result<(), Self::Err>;
 }
+
+pub trait Maybe<T> {
+    fn into_option(self) -> Option<T>;
+}
+
+pub struct Set<T>(pub T);
+
+impl<T> Maybe<T> for Set<T> {
+    fn into_option(self) -> Option<T> {
+        Some(self.0)
+    }
+}
+
+pub struct Unset;
+
+impl<T> Maybe<T> for Unset {
+    fn into_option(self) -> Option<T> {
+        None
+    }
+}

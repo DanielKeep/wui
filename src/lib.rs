@@ -12,6 +12,7 @@ pub mod ext {
     pub use msg::MsgExt;
 }
 
+#[doc(inline)] pub use cursor::*;
 #[doc(inline)] pub use dialog::*;
 #[doc(inline)] pub use dll::*;
 #[doc(inline)] pub use msg::*;
@@ -19,6 +20,7 @@ pub mod ext {
 #[doc(inline)] pub use wnd_class::*;
 #[doc(inline)] pub use wnd_proc::*;
 
+mod cursor;
 mod dialog;
 mod dll;
 mod msg;
