@@ -13,10 +13,12 @@ use ::util::{
 };
 use super::cursor::Cursor;
 
+pub type WndProcRef = unsafe extern "system" fn(wnd: HWND, message: UINT, w_param: WPARAM, l_param: LPARAM) -> LRESULT;
+
 pub struct WndClass(ATOM, HINSTANCE);
 
 impl WndClass {
-    pub fn new() -> WndClassBuilder<(), (), Unset, ()> {
+    pub fn new() -> WndClassBuilder<Unset, Unset, Unset, Unset> {
         WndClassBuilder::new()
     }
 
@@ -100,19 +102,19 @@ pub struct WndClassBuilder<
     class_name: ClassName,
 }
 
-impl WndClassBuilder<(), (), Unset, ()> {
+impl WndClassBuilder<Unset, Unset, Unset, Unset> {
     fn new() -> Self {
         WndClassBuilder {
-            wnd_proc: (),
-            instance: (),
+            wnd_proc: Unset,
+            instance: Unset,
             cursor: Unset,
-            class_name: (),
+            class_name: Unset,
         }
     }
 }
 
-impl<T0, T1, T2> WndClassBuilder<(), T0, T1, T2> {
-    pub fn wnd_proc(self, wnd_proc: unsafe extern "system" fn(HWND, UINT, WPARAM, LPARAM) -> LRESULT) -> WndClassBuilder<unsafe extern "system" fn(HWND, UINT, WPARAM, LPARAM) -> LRESULT, T0, T1, T2> {
+impl<T0, T1, T2> WndClassBuilder<Unset, T0, T1, T2> {
+    pub fn wnd_proc(self, wnd_proc: WndProcRef) -> WndClassBuilder<WndProcRef, T0, T1, T2> {
         WndClassBuilder {
             wnd_proc: wnd_proc,
             instance: self.instance,
@@ -122,7 +124,7 @@ impl<T0, T1, T2> WndClassBuilder<(), T0, T1, T2> {
     }
 }
 
-impl<T0, T1, T2> WndClassBuilder<T0, (), T1, T2> {
+impl<T0, T1, T2> WndClassBuilder<T0, Unset, T1, T2> {
     pub fn instance(self, instance: HINSTANCE) -> WndClassBuilder<T0, HINSTANCE, T1, T2> {
         WndClassBuilder {
             wnd_proc: self.wnd_proc,
@@ -144,7 +146,7 @@ impl<T0, T1, T2> WndClassBuilder<T0, T1, Unset, T2> {
     }
 }
 
-impl<T0, T1, T2> WndClassBuilder<T0, T1, T2, ()> {
+impl<T0, T1, T2> WndClassBuilder<T0, T1, T2, Unset> {
     pub fn class_name(self, class_name: &str) -> WndClassBuilder<T0, T1, T2, &str> {
         WndClassBuilder {
             wnd_proc: self.wnd_proc,
@@ -155,20 +157,23 @@ impl<T0, T1, T2> WndClassBuilder<T0, T1, T2, ()> {
     }
 }
 
-impl<'a, T0: Maybe<Cursor>> WndClassBuilder<unsafe extern "system" fn(HWND, UINT, WPARAM, LPARAM) -> LRESULT, HINSTANCE, T0, &'a str> {
+impl<'a, Cursor_: Maybe<Cursor>> WndClassBuilder<WndProcRef, HINSTANCE, Cursor_, &'a str> {
     pub fn register(self) -> io::Result<WndClass> {
         unsafe {
-            let class_name = self.class_name.to_wide_null();
-            let class_name = class_name.as_ptr();
+            let wnd_proc = self.wnd_proc;
+            let instance = self.instance;
             let cursor = self.cursor.into_option();
             let cursor = cursor.as_ref().map(|v| v.as_raw()).unwrap_or(ptr::null_mut());
+            let class_name = self.class_name.to_wide_null();
+            let class_name = class_name.as_ptr();
+
             let wnd_class = WNDCLASSEXW {
                 cbSize: mem::size_of::<WNDCLASSEXW>().value_into().unwrap_ok(),
                 style: 0,
-                lpfnWndProc: Some(self.wnd_proc),
+                lpfnWndProc: Some(wnd_proc),
                 cbClsExtra: 0,
                 cbWndExtra: 0,
-                hInstance: self.instance,
+                hInstance: instance,
                 hIcon: ptr::null_mut(),
                 hCursor: cursor,
                 hbrBackground: ptr::null_mut(),
@@ -176,6 +181,7 @@ impl<'a, T0: Maybe<Cursor>> WndClassBuilder<unsafe extern "system" fn(HWND, UINT
                 lpszClassName: class_name,
                 hIconSm: ptr::null_mut(),
             };
+
             WndClass::register_raw(&wnd_class)
         }
     }
