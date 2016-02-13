@@ -38,6 +38,25 @@ macro_rules! boolish {
     (@as_items $($i:item)*) => { $($i)* };
 }
 
+#[macro_export]
+macro_rules! wui_abort {
+    ($e:expr, $($args:tt)*) => {
+        match format!($e, $($args)*) {
+            msg => $crate::wui_abort(&msg, None)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! wui_no_panic {
+    ($($body:tt)*) => {
+        match ::std::panic::recover(move || wui_no_panic!(@as_expr {$($body)*})) {
+            Ok(res) => res,
+            Err(err) => wui_abort!("Panic: {}", err)
+        }
+    };
+}
+
 macro_rules! IntoRepr {
     (
         ($repr_ty:ty) pub enum $name:ident $($_tail:tt)*

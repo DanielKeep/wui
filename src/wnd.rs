@@ -107,10 +107,18 @@ impl Wnd {
 }
 
 impl AsRaw for Wnd {
-    type Output = HWND;
+    type Raw = HWND;
 
-    fn as_raw(&self) -> Self::Output {
+    fn as_raw(&self) -> Self::Raw {
         self.0
+    }
+}
+
+impl AsRaw for HWND {
+    type Raw = Self;
+
+    fn as_raw(&self) -> Self {
+        *self
     }
 }
 

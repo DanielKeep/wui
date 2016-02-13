@@ -8,6 +8,18 @@ pub trait IdThunk<Id> {
 }
 
 pub trait AsRaw {
-    type Output;
-    fn as_raw(&self) -> Self::Output;
+    type Raw;
+    fn as_raw(&self) -> Self::Raw;
+}
+
+impl<'a, T> AsRaw for &'a T where T: AsRaw {
+    type Raw = <T as AsRaw>::Raw;
+
+    fn as_raw(&self) -> Self::Raw {
+        (*self).as_raw()
+    }
+}
+
+pub trait IntoRaw: AsRaw {
+    fn into_raw(self) -> Self::Raw;
 }

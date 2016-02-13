@@ -6,6 +6,7 @@ authors = ["Daniel Keep <daniel.keep@gmail.com>"]
 [dependencies]
 conv = "0.3.1"
 custom_derive = "0.1.4"
+gdi32-sys = "0.2.0"
 kernel32-sys = "0.2.1"
 user32-sys = "0.1.2"
 winapi = "0.2.5"

@@ -1,9 +1,10 @@
 use std::io;
+use std::mem;
 use std::ptr;
 use user32;
 use winapi::*;
 use ::last_error;
-use ::traits::{AsId, IdThunk, AsRaw};
+use ::traits::{AsId, IdThunk, AsRaw, IntoRaw};
 use ::util::TryDrop;
 use ::util::WCString;
 
@@ -28,10 +29,32 @@ impl Cursor {
 }
 
 impl AsRaw for Cursor {
-    type Output = HCURSOR;
+    type Raw = HCURSOR;
 
-    fn as_raw(&self) -> Self::Output {
+    fn as_raw(&self) -> Self::Raw {
         self.0
+    }
+}
+
+impl AsRaw for HCURSOR {
+    type Raw = HCURSOR;
+
+    fn as_raw(&self) -> Self::Raw {
+        *self
+    }
+}
+
+impl IntoRaw for Cursor {
+    fn into_raw(self) -> Self::Raw {
+        let r = self.0;
+        mem::forget(self);
+        r
+    }
+}
+
+impl IntoRaw for HCURSOR {
+    fn into_raw(self) -> Self::Raw {
+        self
     }
 }
 
@@ -59,9 +82,9 @@ impl TryDrop for Cursor {
 pub struct CursorId(LPCWSTR);
 
 impl AsRaw for CursorId {
-    type Output = LPCWSTR;
+    type Raw = LPCWSTR;
 
-    fn as_raw(&self) -> Self::Output {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
