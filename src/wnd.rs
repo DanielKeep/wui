@@ -2,10 +2,9 @@ use std::io;
 use std::ptr;
 use user32;
 use winapi::*;
-use wio::wide::ToWide;
 use ::last_error;
 use ::traits::{AsId, IdThunk, AsRaw};
-use ::util::TryDrop;
+use ::util::{TryDrop, WCString};
 use super::wnd_class::WndClassId;
 
 custom_derive! {
@@ -68,7 +67,7 @@ bitflags! {
 pub struct Wnd(HWND);
 
 impl Wnd {
-    pub fn new() -> WndBuilder<(), (), ()> {
+    pub fn new<'a>() -> WndBuilder<'a> {
         WndBuilder::new()
     }
 
@@ -139,67 +138,50 @@ impl TryDrop for Wnd {
     }
 }
 
-pub struct WndBuilder<
-    ClassName,
-    WindowName,
-    Style,
-> {
-    class_name: ClassName,
-    window_name: WindowName,
-    style: Style,
+pub struct WndBuilder<'a> {
+    class_name: Option<Box<IdThunk<WndClassId> + 'a>>,
+    window_name: Option<WCString>,
+    style: Option<WndStyle>,
 }
 
-impl WndBuilder<(), (), ()> {
+impl<'a> WndBuilder<'a> {
     fn new() -> Self {
         WndBuilder {
-            class_name: (),
-            window_name: (),
-            style: (),
+            class_name: None,
+            window_name: None,
+            style: None,
         }
     }
-}
 
-impl<T0, T1> WndBuilder<(), T0, T1> {
-    pub fn class_name<T>(self, value: T) -> WndBuilder<T, T0, T1>
-    where T: AsId<WndClassId> {
+    pub fn class_name<T: 'a + AsId<WndClassId>>(self, value: T) -> Self {
         WndBuilder {
-            class_name: value,
-            window_name: self.window_name,
-            style: self.style,
+            class_name: Some(Box::new(value.into_id_thunk())),
+            ..self
         }
     }
-}
 
-impl<T0, T1> WndBuilder<T0, (), T1> {
-    pub fn window_name(self, value: &str) -> WndBuilder<T0, &str, T1> {
+    pub fn window_name(self, value: &str) -> Self {
         WndBuilder {
-            class_name: self.class_name,
-            window_name: value,
-            style: self.style,
+            window_name: Some(value.into()),
+            ..self
         }
     }
-}
 
-impl<T0, T1> WndBuilder<T0, T1, ()> {
-    pub fn style(self, value: WndStyle) -> WndBuilder<T0, T1, WndStyle> {
+    pub fn style(self, value: WndStyle) -> Self {
         WndBuilder {
-            class_name: self.class_name,
-            window_name: self.window_name,
-            style: value,
+            style: Some(value),
+            ..self
         }
     }
-}
 
-impl<'a, ClassName> WndBuilder<ClassName, &'a str, WndStyle>
-where ClassName: AsId<WndClassId> {
     pub fn create(self) -> io::Result<Wnd> {
         unsafe {
             let ex_style = 0;
-            let class_name = self.class_name.into_id_thunk();
+            let class_name = self.class_name.expect("missing class_name");
             let (class_name, instance) = class_name.as_id().unpack();
-            let window_name = self.window_name.to_wide_null();
+            let window_name = self.window_name.expect("missing window_name");
             let window_name = window_name.as_ptr();
-            let style = self.style.bits;
+            let style = self.style.expect("missing style").bits;
             let x = CW_USEDEFAULT;
             let y = CW_USEDEFAULT;
             let width = CW_USEDEFAULT;
