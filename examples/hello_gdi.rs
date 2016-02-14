@@ -24,6 +24,7 @@ fn try_main() -> io::Result<()> {
     let wnd_class = try!(WndClass::new()
         .class_name("Hello")
         .instance(try!(get_module_handle(None)))
+        .icon(try!(Icon::load(None, IDI_APPLICATION)))
         .cursor(try!(Cursor::load(None, IDC_ARROW)))
         .background(try!(Brush::get_sys_color(Color::BtnFace)))
         .wnd_proc(wnd_proc)

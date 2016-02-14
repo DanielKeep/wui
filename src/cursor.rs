@@ -5,10 +5,7 @@ use user32;
 use winapi::*;
 use ::last_error;
 use ::traits::{AsId, IdThunk, AsRaw, IntoRaw};
-use ::util::TryDrop;
-use ::util::WCString;
-
-enum Shared { Yes, No }
+use ::util::{Shared, TryDrop, WCString};
 
 pub struct Cursor(HCURSOR, Shared);
 
@@ -36,13 +33,7 @@ impl AsRaw for Cursor {
     }
 }
 
-impl AsRaw for HCURSOR {
-    type Raw = HCURSOR;
-
-    fn as_raw(&self) -> Self::Raw {
-        *self
-    }
-}
+// No impl for HCURSOR, as it's just an alias for HICON.
 
 impl IntoRaw for Cursor {
     fn into_raw(self) -> Self::Raw {
@@ -52,11 +43,7 @@ impl IntoRaw for Cursor {
     }
 }
 
-impl IntoRaw for HCURSOR {
-    fn into_raw(self) -> Self::Raw {
-        self
-    }
-}
+// No impl for HCURSOR, as it's just an alias for HICON.
 
 impl Drop for Cursor {
     fn drop(&mut self) {

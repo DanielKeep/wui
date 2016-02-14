@@ -29,3 +29,5 @@ pub trait TryDrop: Sized {
 
     unsafe fn try_drop_inner(&mut self) -> Result<(), Self::Err>;
 }
+
+pub enum Shared { Yes, No }

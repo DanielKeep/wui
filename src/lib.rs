@@ -18,6 +18,7 @@ pub mod ext {
 #[doc(inline)] pub use dc::*;
 #[doc(inline)] pub use dialog::*;
 #[doc(inline)] pub use dll::*;
+#[doc(inline)] pub use icon::*;
 #[doc(inline)] pub use msg::*;
 #[doc(inline)] pub use paint::*;
 #[doc(inline)] pub use text::*;
@@ -30,6 +31,7 @@ mod cursor;
 mod dc;
 mod dialog;
 mod dll;
+mod icon;
 mod msg;
 mod paint;
 mod text;
