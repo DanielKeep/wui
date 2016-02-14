@@ -16,6 +16,7 @@ pub mod ext {
 #[doc(inline)] pub use brush::*;
 #[doc(inline)] pub use cursor::*;
 #[doc(inline)] pub use dc::*;
+#[doc(inline)] pub use debug::*;
 #[doc(inline)] pub use dialog::*;
 #[doc(inline)] pub use dll::*;
 #[doc(inline)] pub use icon::*;
@@ -29,6 +30,7 @@ pub mod ext {
 mod brush;
 mod cursor;
 mod dc;
+mod debug;
 mod dialog;
 mod dll;
 mod icon;
