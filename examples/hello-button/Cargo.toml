@@ -1,0 +1,21 @@
+[package]
+name = "hello-button"
+version = "0.1.0"
+authors = ["Daniel Keep <daniel.keep@gmail.com>"]
+description = "Example showing how to make a button."
+
+build = "build.rs"
+
+[[bin]]
+name = "hello-button"
+path = "hello-button.rs"
+
+[features]
+trace-messages = []
+
+[dependencies]
+winapi = "0.2.5"
+wui = { version = "0.1.0", path = "../../" }
+
+[build-dependencies]
+wui-build = { version = "0.1.0", path = "../../wui-build" }
