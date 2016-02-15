@@ -33,7 +33,7 @@ boolish! {
 }
 
 bitflags! {
-    flags WndStyle, wnd_style: DWORD {
+    loose flags WndStyle, wnd_style: DWORD {
         const Border = ::winapi::WS_BORDER,
         const Caption = ::winapi::WS_CAPTION,
         const Child = ::winapi::WS_CHILD,
@@ -142,6 +142,12 @@ pub struct WndBuilder<'a> {
     class_name: Option<Box<IdThunk<WndClassId> + 'a>>,
     window_name: Option<WCString>,
     style: Option<WndStyle>,
+    x: Option<INT>,
+    y: Option<INT>,
+    width: Option<INT>,
+    height: Option<INT>,
+    wnd_parent: Option<HWND>,
+    menu: Option<HMENU>,
 }
 
 impl<'a> WndBuilder<'a> {
@@ -150,6 +156,12 @@ impl<'a> WndBuilder<'a> {
             class_name: None,
             window_name: None,
             style: None,
+            x: None,
+            y: None,
+            width: None,
+            height: None,
+            wnd_parent: None,
+            menu: None,
         }
     }
 
@@ -174,6 +186,55 @@ impl<'a> WndBuilder<'a> {
         }
     }
 
+    pub fn x(self, value: INT) -> Self {
+        WndBuilder {
+            x: Some(value),
+            ..self
+        }
+    }
+
+    pub fn y(self, value: INT) -> Self {
+        WndBuilder {
+            y: Some(value),
+            ..self
+        }
+    }
+
+    pub fn width(self, value: INT) -> Self {
+        WndBuilder {
+            width: Some(value),
+            ..self
+        }
+    }
+
+    pub fn height(self, value: INT) -> Self {
+        WndBuilder {
+            height: Some(value),
+            ..self
+        }
+    }
+
+    pub fn wnd_parent<Wnd: AsRaw<Raw=HWND>>(self, value: Wnd) -> Self {
+        WndBuilder {
+            wnd_parent: Some(value.as_raw()),
+            ..self
+        }
+    }
+
+    pub fn menu<Menu: AsRaw<Raw=HMENU>>(self, value: Menu) -> Self {
+        WndBuilder {
+            menu: Some(value.as_raw()),
+            ..self
+        }
+    }
+
+    pub fn button_id(self, value: u16) -> Self {
+        WndBuilder {
+            menu: Some(value as usize as HMENU),
+            ..self
+        }
+    }
+
     pub fn create(self) -> io::Result<Wnd> {
         unsafe {
             let ex_style = 0;
@@ -182,12 +243,12 @@ impl<'a> WndBuilder<'a> {
             let window_name = self.window_name.expect("missing window_name");
             let window_name = window_name.as_ptr();
             let style = self.style.expect("missing style").bits;
-            let x = CW_USEDEFAULT;
-            let y = CW_USEDEFAULT;
-            let width = CW_USEDEFAULT;
-            let height = CW_USEDEFAULT;
-            let wnd_parent = ptr::null_mut();
-            let menu = ptr::null_mut();
+            let x = self.x.unwrap_or(CW_USEDEFAULT);
+            let y = self.y.unwrap_or(CW_USEDEFAULT);
+            let width = self.width.unwrap_or(CW_USEDEFAULT);
+            let height = self.height.unwrap_or(CW_USEDEFAULT);
+            let wnd_parent = self.wnd_parent.unwrap_or(ptr::null_mut());
+            let menu = self.menu.unwrap_or(ptr::null_mut());
             let param = ptr::null_mut();
             Wnd::create_raw(ex_style, class_name, window_name,
                 style, x, y, width, height,

@@ -193,7 +193,7 @@ impl WndClassBuilder {
             let background = self.background.unwrap_or(ptr::null_mut());
 
             let wnd_class = WNDCLASSEXW {
-                cbSize: mem::size_of::<WNDCLASSEXW>().value_into().unwrap_ok(),
+                cbSize: mem::size_of::<WNDCLASSEXW>().value_into().unwrap(),
                 style: style,
                 lpfnWndProc: Some(wnd_proc),
                 cbClsExtra: cls_extra,

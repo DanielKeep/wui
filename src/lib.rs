@@ -14,6 +14,7 @@ pub mod ext {
 }
 
 #[doc(inline)] pub use brush::*;
+#[doc(inline)] pub use button::*;
 #[doc(inline)] pub use cursor::*;
 #[doc(inline)] pub use dc::*;
 #[doc(inline)] pub use debug::*;
@@ -28,6 +29,7 @@ pub mod ext {
 #[doc(inline)] pub use wnd_proc::*;
 
 mod brush;
+mod button;
 mod cursor;
 mod dc;
 mod debug;

@@ -17,7 +17,7 @@ macro_rules! lookup_table {
 
 #[cfg(not(debug_assertions))]
 macro_rules! lookup_table {
-    ($fn_name:ident: $in_ty:ty $_body:tt) => {
+    ($fn_name:ident: $in_ty:ty { $($_body:tt)* }) => {
         fn $fn_name(value: $in_ty) -> Option<&'static str> {
             let _ = value;
             None
