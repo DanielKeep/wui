@@ -24,6 +24,7 @@ fn main() {
 
 fn try_main() -> io::Result<()> {
     use wui::button_style as bs;
+    use wui::static_style as ss;
     use wui::wnd_style as ws;
 
     let wnd_class = try!(WndClass::new()
@@ -39,14 +40,24 @@ fn try_main() -> io::Result<()> {
         .class_name(&wnd_class)
         .window_name("Hello")
         .style(ws::OverlappedWindow)
+        .width(250+30).height(45+40)
+        .create());
+
+    let _lbl = try!(Wnd::new()
+        .class_name("STATIC")
+        .window_name("Click that over there.")
+        .style(ws::Child | ws::Visible | ss::CenterImage)
+        .x(10).y(10)
+        .width(150).height(25)
+        .wnd_parent(&wnd)
         .create());
 
     let _btn = try!(Wnd::new()
         .class_name("BUTTON")
         .window_name("Hello")
         .style(ws::TabStop | ws::Visible | ws::Child | bs::DefPushButton)
-        .x(10).y(10)
-        .width(100).height(100)
+        .x(170).y(10)
+        .width(80).height(25)
         .wnd_parent(&wnd)
         .button_id(BTN_HELLO_ID)
         .create());

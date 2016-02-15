@@ -23,6 +23,7 @@ pub mod ext {
 #[doc(inline)] pub use icon::*;
 #[doc(inline)] pub use msg::*;
 #[doc(inline)] pub use paint::*;
+#[doc(inline)] pub use static_::*;
 #[doc(inline)] pub use text::*;
 #[doc(inline)] pub use wnd::*;
 #[doc(inline)] pub use wnd_class::*;
@@ -38,6 +39,7 @@ mod dll;
 mod icon;
 mod msg;
 mod paint;
+mod static_;
 mod text;
 mod traits;
 mod util;
