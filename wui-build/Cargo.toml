@@ -1,0 +1,11 @@
+[package]
+name = "wui-build"
+version = "0.1.0"
+authors = ["Daniel Keep <daniel.keep@gmail.com>"]
+
+[dependencies]
+# bitflags = "0.4.0"
+collect-mac = "0.1.0"
+gcc = "0.3.23"
+rustc-serialize = "0.3.18"
+tempfile = "2.1.0"
