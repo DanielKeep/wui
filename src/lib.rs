@@ -15,6 +15,7 @@ pub mod ext {
 
 #[doc(inline)] pub use brush::*;
 #[doc(inline)] pub use button::*;
+#[doc(inline)] pub use config::*;
 #[doc(inline)] pub use cursor::*;
 #[doc(inline)] pub use dc::*;
 #[doc(inline)] pub use debug::*;
@@ -25,12 +26,14 @@ pub mod ext {
 #[doc(inline)] pub use paint::*;
 #[doc(inline)] pub use static_::*;
 #[doc(inline)] pub use text::*;
+#[doc(inline)] pub use traits::*;
 #[doc(inline)] pub use wnd::*;
 #[doc(inline)] pub use wnd_class::*;
 #[doc(inline)] pub use wnd_proc::*;
 
 mod brush;
 mod button;
+mod config;
 mod cursor;
 mod dc;
 mod debug;

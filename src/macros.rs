@@ -57,6 +57,17 @@ macro_rules! wui_no_panic {
     };
 }
 
+macro_rules! io_err {
+    ($arg:expr) => {
+        Err(::std::io::Error::new(::std::io::ErrorKind::Other, $arg))
+    };
+
+    ($arg:expr, $($tail:tt)*) => {
+        Err(::std::io::Error::new(::std::io::ErrorKind::Other,
+            format!($arg, $($tail)*)))
+    };
+}
+
 macro_rules! IntoRepr {
     (
         ($repr_ty:ty) pub enum $name:ident $($_tail:tt)*

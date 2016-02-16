@@ -5,6 +5,7 @@
 extern crate winapi;
 
 use std::io;
+use std::mem;
 use winapi::*;
 use wui::*;
 
@@ -43,7 +44,17 @@ fn try_main() -> io::Result<()> {
         .width(250+30).height(45+40)
         .create());
 
-    let _lbl = try!(Wnd::new()
+    // Get the system message font.
+    let msg_font = {
+        let ncm = try!(system_parameters_info::get_non_client_metrics());
+        let font = try!(Font::create(&ncm.lfMessageFont));
+        let font_raw = font.as_raw();
+        mem::forget(font);
+        font_raw
+    };
+    unsafe { set_font(&wnd, msg_font, false); }
+
+    let lbl = try!(Wnd::new()
         .class_name("STATIC")
         .window_name("Click that over there.")
         .style(ws::Child | ws::Visible | ss::CenterImage)
@@ -51,8 +62,9 @@ fn try_main() -> io::Result<()> {
         .width(150).height(25)
         .wnd_parent(&wnd)
         .create());
+    unsafe { set_font(&lbl, msg_font, false); }
 
-    let _btn = try!(Wnd::new()
+    let btn = try!(Wnd::new()
         .class_name("BUTTON")
         .window_name("Hello")
         .style(ws::TabStop | ws::Visible | ws::Child | bs::DefPushButton)
@@ -61,6 +73,7 @@ fn try_main() -> io::Result<()> {
         .wnd_parent(&wnd)
         .button_id(BTN_HELLO_ID)
         .create());
+    unsafe { set_font(&btn, msg_font, false); }
 
     wnd.show(Show::ShowDefault);
     try!(wnd.update());

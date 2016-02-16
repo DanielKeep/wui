@@ -256,3 +256,14 @@ impl<'a> WndBuilder<'a> {
         }
     }
 }
+
+pub unsafe fn set_font<W, F>(wnd: W, font: F, redraw: bool)
+where
+    W: AsRaw<Raw=HWND>,
+    F: AsRaw<Raw=HFONT>,
+{
+    let wnd = wnd.as_raw();
+    let font = font.as_raw() as WPARAM;
+    let redraw = redraw as LPARAM;
+    user32::SendMessageW(wnd, WM_SETFONT, font, redraw);
+}
