@@ -122,14 +122,25 @@ fn try_main() -> io::Result<()> {
     wnd.show(Show::ShowDefault);
     try!(wnd.update());
 
+    let top_level_wnds = [&wnd];
+
     loop {
         match try!(MSG::get(None, None)) {
             MSG { message: WM_QUIT, wParam: code, .. } => {
                 ::std::process::exit(code as i32);
             },
-            msg => {
-                msg.translate();
-                msg.dispatch();
+            mut msg => {
+                let mut processed = false;
+                for wnd in &top_level_wnds {
+                    if msg.is_dialog_message(wnd) {
+                        processed = true;
+                        break;
+                    }
+                }
+                if !processed {
+                    msg.translate();
+                    msg.dispatch();
+                }
             }
         }
     }
@@ -212,12 +223,12 @@ unsafe extern "system" fn wnd_proc(wnd: HWND, message: UINT, w_param: WPARAM, l_
             "\
                 Unhandled error: {}\r\n\
                 \r\n\
-                wnd: 0x{:p}\r\n\
-                message: 0x{:x}\r\n\
+                wnd: {:p}\r\n\
+                message: {:?}\r\n\
                 w_param: 0x{:x}\r\n\
                 l_param: 0x{:x}\
             ",
-            err, wnd, message, w_param, l_param),
+            err, wnd, FormatMsg(message), w_param, l_param),
         Err(err) => {
             let msg = if let Some(err) = err.downcast_ref::<&'static str>() {
                 String::from(*err)
@@ -233,12 +244,12 @@ unsafe extern "system" fn wnd_proc(wnd: HWND, message: UINT, w_param: WPARAM, l_
                 "\
                     Panic: {}\r\n\
                     \r\n\
-                    wnd: 0x{:p}\r\n\
-                    message: 0x{:x}\r\n\
+                    wnd: {:p}\r\n\
+                    message: {:?}\r\n\
                     w_param: 0x{:x}\r\n\
                     l_param: 0x{:x}\
                 ",
-                msg, wnd, message, w_param, l_param)
+                msg, wnd, FormatMsg(message), w_param, l_param)
         }
     }
 }

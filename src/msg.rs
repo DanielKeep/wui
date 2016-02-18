@@ -12,6 +12,7 @@ pub trait MsgExt: Sized {
     fn post_quit(exit_code: INT);
 
     fn dispatch(&self) -> LRESULT;
+    fn is_dialog_message<Wnd>(&mut self, dlg: Wnd) -> bool where Wnd: AsRaw<Raw=HWND>;
     fn translate(&self) -> bool;
 }
 
@@ -37,6 +38,17 @@ impl MsgExt for MSG {
     fn dispatch(&self) -> LRESULT {
         unsafe {
             user32::DispatchMessageW(self)
+        }
+    }
+
+    fn is_dialog_message<Wnd>(&mut self, dlg: Wnd) -> bool
+    where Wnd: AsRaw<Raw=HWND> {
+        unsafe {
+            let dlg = dlg.as_raw();
+            match user32::IsDialogMessageW(dlg, self) {
+                0 => false,
+                _ => true
+            }
         }
     }
 
