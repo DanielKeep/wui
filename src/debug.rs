@@ -285,7 +285,7 @@ pub struct FormatMsg(pub UINT);
 impl fmt::Debug for FormatMsg {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match message_name(self.0) {
-            Some(name) => fmt::Debug::fmt(&name, fmt),
+            Some(name) => fmt::Display::fmt(&name, fmt),
             None => {
                 try!(fmt::Display::fmt(&"0x", fmt));
                 fmt::LowerHex::fmt(&self.0, fmt)
