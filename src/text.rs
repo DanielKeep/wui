@@ -4,7 +4,7 @@ use gdi32;
 use winapi::*;
 use wio::wide::ToWide;
 use ::last_error;
-use ::traits::AsRaw;
+use ::traits::{AsRaw, FromRaw};
 use ::util::TryDrop;
 
 pub struct Font(HFONT);
@@ -37,6 +37,12 @@ impl AsRaw for HFONT {
 impl Drop for Font {
     fn drop(&mut self) {
         unsafe { self.try_drop_inner().unwrap() }
+    }
+}
+
+impl FromRaw for Font {
+    unsafe fn from_raw(raw: HFONT) -> Font {
+        Font(raw)
     }
 }
 

@@ -4,12 +4,50 @@
 #[macro_use] extern crate wui;
 extern crate winapi;
 
+use std::cell::Cell;
 use std::io;
 use std::mem;
+use std::ptr;
 use winapi::*;
 use wui::*;
+use wui::util::TryDrop;
 
 const BTN_HELLO_ID: u16 = 101;
+
+#[derive(Debug)]
+pub struct WndExtra {
+    font: Cell<HFONT>,
+}
+
+impl Default for WndExtra {
+    fn default() -> Self {
+        WndExtra {
+            font: Cell::new(ptr::null_mut()),
+        }
+    }
+}
+
+impl Drop for WndExtra {
+    fn drop(&mut self) {
+        unsafe { self.try_drop_inner().unwrap() }
+    }
+}
+
+impl TryDrop for WndExtra {
+    type Err = io::Error;
+
+    unsafe fn try_drop_inner(&mut self) -> Result<(), Self::Err> {
+        let mut r = Ok(());
+        match self.font.get() {
+            v if v.is_null() => (),
+            v => {
+                self.font.set(ptr::null_mut());
+                r = r.and(Font::from_raw(v).try_drop());
+            }
+        }
+        r
+    }
+}
 
 fn main() {
     use wui::message_box_type as mbt;
@@ -35,16 +73,10 @@ fn try_main() -> io::Result<()> {
         .cursor(try!(Cursor::load(None, IDC_ARROW)))
         .background(try!(Brush::get_sys_color(Color::BtnFace)))
         .wnd_proc(wnd_proc)
+        .wnd_extra(mem::size_of::<*const WndExtra>())
         .register());
 
-    let wnd = try!(Wnd::new()
-        .class_name(&wnd_class)
-        .window_name("Hello")
-        .style(ws::OverlappedWindow)
-        .width(250+30).height(45+40)
-        .create());
-
-    // Get the system message font.
+    // Get a decent default font.
     let msg_font = {
         let ncm = try!(system_parameters_info::get_non_client_metrics());
         let font = try!(Font::create(&ncm.lfMessageFont));
@@ -52,7 +84,19 @@ fn try_main() -> io::Result<()> {
         mem::forget(font);
         font_raw
     };
-    unsafe { set_font(&wnd, msg_font, false); }
+
+    // Build extra window data.
+    let extra = Box::new(WndExtra::default());
+    extra.font.set(msg_font);
+    let extra_ptr = Box::into_raw(extra);
+
+    let wnd = try!(Wnd::new()
+        .class_name(&wnd_class)
+        .window_name("Hello")
+        .style(ws::OverlappedWindow)
+        .width(250+30).height(45+40)
+        .param(extra_ptr)
+        .create());
 
     let lbl = try!(Wnd::new()
         .class_name("STATIC")
@@ -104,7 +148,41 @@ fn try_wnd_proc(wnd: HWND, message: UINT, w_param: WPARAM, l_param: LPARAM) -> i
                 _ => Ok(def_window_proc(wnd, message, w_param, l_param))
             }
         },
+        WM_CREATE => {
+            unsafe {
+                let extra_ptr = l_param as *const WndExtra;
+                if extra_ptr.is_null() {
+                    return other_error("got null *const WndExtra in WM_CREATE");
+                }
+
+                let extra = &*extra_ptr;
+
+                set_font(wnd, extra.font.get(), false);
+
+                try!(set_window_long_ptr(wnd, 0, extra_ptr));
+            }
+
+            Ok(0)
+        },
         WM_DESTROY => {
+            // Drop extra window data.
+            wui_ok_or_warn! {
+                unsafe {
+                    let extra_ptr = try!(set_window_long_ptr(wnd, 0, ptr::null::<WndExtra>()));
+
+                    if extra_ptr.is_null () {
+                        return other_error("cannot delete WndExtra: window long was zero");
+                    }
+
+                    /*
+                    This *should* be OK because we just erased the pointer in the window itself.  MSDN doesn't specify whether or not this is atomic, but it *should* be OK.  There's only so un-atomic it can be.
+                    */
+                    let extra_ptr = extra_ptr as *mut _;
+                    let extra = Box::<WndExtra>::from_raw(extra_ptr);
+                    try!(extra.try_drop());
+                    Ok(())
+                }
+            }
             MSG::post_quit(0);
             Ok(0)
         },
@@ -163,4 +241,8 @@ unsafe extern "system" fn wnd_proc(wnd: HWND, message: UINT, w_param: WPARAM, l_
                 msg, wnd, message, w_param, l_param)
         }
     }
+}
+
+fn other_error<T>(msg: &str) -> std::io::Result<T> {
+    Err(std::io::Error::new(std::io::ErrorKind::Other, msg))
 }

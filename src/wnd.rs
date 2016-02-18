@@ -1,5 +1,6 @@
 use std::io;
 use std::ptr;
+use kernel32;
 use user32;
 use winapi::*;
 use ::last_error;
@@ -148,6 +149,7 @@ pub struct WndBuilder<'a> {
     height: Option<INT>,
     wnd_parent: Option<HWND>,
     menu: Option<HMENU>,
+    param: Option<LPVOID>,
 }
 
 impl<'a> WndBuilder<'a> {
@@ -162,6 +164,7 @@ impl<'a> WndBuilder<'a> {
             height: None,
             wnd_parent: None,
             menu: None,
+            param: None,
         }
     }
 
@@ -235,6 +238,13 @@ impl<'a> WndBuilder<'a> {
         }
     }
 
+    pub fn param<T>(self, param: *mut T) -> Self {
+        WndBuilder {
+            param: Some(param as LPVOID),
+            ..self
+        }
+    }
+
     pub fn create(self) -> io::Result<Wnd> {
         unsafe {
             let ex_style = 0;
@@ -249,11 +259,32 @@ impl<'a> WndBuilder<'a> {
             let height = self.height.unwrap_or(CW_USEDEFAULT);
             let wnd_parent = self.wnd_parent.unwrap_or(ptr::null_mut());
             let menu = self.menu.unwrap_or(ptr::null_mut());
-            let param = ptr::null_mut();
+            let param = self.param.unwrap_or(ptr::null_mut());
             Wnd::create_raw(ex_style, class_name, window_name,
                 style, x, y, width, height,
                 wnd_parent, menu, instance, param)
         }
+    }
+}
+
+pub unsafe fn get_window_long_ptr<W, T>(wnd: W, index: i32) -> io::Result<*const T>
+where W: AsRaw<Raw=HWND>
+{
+    #[cfg(target_pointer_width="32")]
+    use ::user32::GetWindowLongW as GetWindowLongPtr;
+
+    #[cfg(target_pointer_width="64")]
+    use ::user32::GetWindowLongPtrW;
+
+    // Clear so that we can distinguish from "success, and the value was zero" and "failure".
+    kernel32::SetLastError(0);
+
+    let wnd = wnd.as_raw();
+
+    match GetWindowLongPtr(wnd, index) {
+        0 if kernel32::GetLastError() == 0 => Ok(0usize as *const T),
+        0 => last_error(),
+        v => Ok(v as *const T)
     }
 }
 
@@ -266,4 +297,27 @@ where
     let font = font.as_raw() as WPARAM;
     let redraw = redraw as LPARAM;
     user32::SendMessageW(wnd, WM_SETFONT, font, redraw);
+}
+
+pub unsafe fn set_window_long_ptr<W, T>(wnd: W, index: i32, new_long: *const T)
+-> io::Result<*const T>
+where W: AsRaw<Raw=HWND>
+{
+    #[cfg(target_pointer_width="32")]
+    use ::user32::SetWindowLongW as SetWindowLongPtr;
+
+    #[cfg(target_pointer_width="64")]
+    use ::user32::SetWindowLongPtrW;
+
+    // Clear so that we can distinguish from "success, and the last value was zero" and "failure".
+    kernel32::SetLastError(0);
+
+    let wnd = wnd.as_raw();
+    let new_long = new_long as LONG_PTR;
+
+    match SetWindowLongPtr(wnd, index, new_long) {
+        0 if kernel32::GetLastError() == 0 => Ok(0usize as *const T),
+        0 => last_error(),
+        v => Ok(v as *const T)
+    }
 }

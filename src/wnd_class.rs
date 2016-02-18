@@ -144,6 +144,20 @@ impl WndClassBuilder {
         }
     }
 
+    pub fn cls_extra(self, value: usize) -> WndClassBuilder {
+        WndClassBuilder {
+            cls_extra: Some(value),
+            ..self
+        }
+    }
+
+    pub fn wnd_extra(self, value: usize) -> WndClassBuilder {
+        WndClassBuilder {
+            wnd_extra: Some(value),
+            ..self
+        }
+    }
+
     pub fn instance(self, instance: HINSTANCE) -> WndClassBuilder {
         WndClassBuilder {
             instance: Some(instance),

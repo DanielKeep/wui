@@ -20,6 +20,10 @@ impl<'a, T> AsRaw for &'a T where T: AsRaw {
     }
 }
 
+pub trait FromRaw: AsRaw {
+    unsafe fn from_raw(raw: Self::Raw) -> Self;
+}
+
 pub trait IntoRaw: AsRaw {
     fn into_raw(self) -> Self::Raw;
 }

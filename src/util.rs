@@ -16,7 +16,7 @@ impl<T> From<T> for WCString where T: ToWide {
     }
 }
 
-pub trait TryDrop: Sized {
+pub trait TryDrop: Drop + Sized {
     type Err: Error;
 
     fn try_drop(mut self) -> Result<(), Self::Err> {

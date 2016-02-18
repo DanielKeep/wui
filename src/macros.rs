@@ -50,11 +50,30 @@ macro_rules! wui_abort {
 #[macro_export]
 macro_rules! wui_no_panic {
     ($($body:tt)*) => {
-        match ::std::panic::recover(move || wui_no_panic!(@as_expr {$($body)*})) {
+        match ::std::panic::recover(move || wui_util__!(@as_expr {$($body)*})) {
             Ok(res) => res,
             Err(err) => wui_abort!("Panic: {}", err)
         }
     };
+}
+
+#[macro_export]
+macro_rules! wui_ok_or_warn {
+    ($($body:tt)*) => {
+        match (|| -> ::std::io::Result<()> { wui_util__!(@as_expr { $($body)* }) })() {
+            Ok(()) => (),
+            Err(err) => {
+                use ::std::io::Write;
+                let _ = write!(::std::io::stderr(), "Warning: ignored error: {}", err);
+            }
+        }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! wui_util__ {
+    (@as_expr $e:expr) => { $e };
 }
 
 macro_rules! io_err {

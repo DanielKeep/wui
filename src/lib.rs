@@ -13,6 +13,8 @@ pub mod ext {
     pub use msg::MsgExt;
 }
 
+pub mod util;
+
 #[doc(inline)] pub use brush::*;
 #[doc(inline)] pub use button::*;
 #[doc(inline)] pub use config::*;
@@ -45,7 +47,6 @@ mod paint;
 mod static_;
 mod text;
 mod traits;
-mod util;
 mod wnd;
 mod wnd_class;
 mod wnd_proc;
