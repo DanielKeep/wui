@@ -21,9 +21,9 @@ pub trait TryDrop: Drop + Sized {
 
     fn try_drop(mut self) -> Result<(), Self::Err> {
         unsafe {
-            try!(self.try_drop_inner());
+            let r = self.try_drop_inner();
             mem::forget(self);
-            Ok(())
+            r
         }
     }
 

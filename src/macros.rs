@@ -64,7 +64,7 @@ macro_rules! wui_ok_or_warn {
             Ok(()) => (),
             Err(err) => {
                 use ::std::io::Write;
-                let _ = write!(::std::io::stderr(), "Warning: ignored error: {}", err);
+                let _ = writeln!(::std::io::stderr(), "Warning: ignored error: {}", err);
             }
         }
     };

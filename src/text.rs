@@ -3,17 +3,18 @@ use conv::prelude::*;
 use gdi32;
 use winapi::*;
 use wio::wide::ToWide;
-use ::last_error;
+use ::other_error;
 use ::traits::{AsRaw, FromRaw};
 use ::util::TryDrop;
 
+#[derive(Debug)]
 pub struct Font(HFONT);
 
 impl Font {
     pub fn create(font: &LOGFONTW) -> io::Result<Self> {
         unsafe {
             match gdi32::CreateFontIndirectW(font) {
-                v if v.is_null() => last_error(),
+                v if v.is_null() => other_error("CreateFontIndirectW failed"),
                 v => Ok(Font(v))
             }
         }
@@ -50,7 +51,7 @@ impl TryDrop for Font {
     type Err = io::Error;
     unsafe fn try_drop_inner(&mut self) -> Result<(), Self::Err> {
         match gdi32::DeleteObject(self.0 as HGDIOBJ) {
-            0 => last_error(),
+            0 => other_error(&format!("DeleteObject on HFONT {:p} failed", self.0)),
             _ => Ok(())
         }
     }
@@ -68,7 +69,7 @@ where Dc: AsRaw<Raw=HDC> {
         let ch_string = string.len().value_as::<INT>().unwrap_or_saturate();
         let string = string.as_ptr();
         match TextOutW(dc, x_start, y_start, string, ch_string) {
-            0 => last_error(),
+            0 => other_error("TextOutW failed"),
             _ => Ok(())
         }
     }

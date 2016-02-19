@@ -42,7 +42,8 @@ impl TryDrop for WndExtra {
             v if v.is_null() => (),
             v => {
                 self.font.set(ptr::null_mut());
-                r = r.and(Font::from_raw(v).try_drop());
+                let font = Font::from_raw(v);
+                r = r.and(font.try_drop());
             }
         }
         r
@@ -73,7 +74,6 @@ fn try_main() -> io::Result<()> {
         .cursor(try!(Cursor::load(None, IDC_ARROW)))
         .background(try!(Brush::get_sys_color(Color::BtnFace)))
         .wnd_proc(wnd_proc)
-        .wnd_extra(mem::size_of::<*const WndExtra>())
         .register());
 
     // Get a decent default font.
@@ -125,7 +125,9 @@ fn try_main() -> io::Result<()> {
     let top_level_wnds = [&wnd];
 
     loop {
-        match try!(MSG::get(None, None)) {
+        let msg = try!(MSG::get(None, None));
+        trace_message(msg.hwnd, msg.message, msg.wParam, msg.lParam);
+        match msg {
             MSG { message: WM_QUIT, wParam: code, .. } => {
                 ::std::process::exit(code as i32);
             },
@@ -147,7 +149,6 @@ fn try_main() -> io::Result<()> {
 }
 
 fn try_wnd_proc(wnd: HWND, message: UINT, w_param: WPARAM, l_param: LPARAM) -> io::Result<LRESULT> {
-    trace_message(wnd, message, w_param, l_param);
     match message {
         WM_COMMAND => {
             use wui::WmCommand::*;
@@ -161,16 +162,22 @@ fn try_wnd_proc(wnd: HWND, message: UINT, w_param: WPARAM, l_param: LPARAM) -> i
         },
         WM_CREATE => {
             unsafe {
-                let extra_ptr = l_param as *const WndExtra;
-                if extra_ptr.is_null() {
-                    return other_error("got null *const WndExtra in WM_CREATE");
+                let l_param_ptr = l_param as *mut CREATESTRUCTW;
+                if l_param_ptr.is_null() {
+                    return other_error("got null *mut CREATESTRUCT in WM_CREATE");
                 }
+                let l_param = &*l_param_ptr;
 
+                let extra_ptr = l_param.lpCreateParams as *mut WndExtra;
+                if extra_ptr.is_null() {
+                    return other_error("got null *mut WndExtra in WM_CREATE");
+                }
                 let extra = &*extra_ptr;
 
-                set_font(wnd, extra.font.get(), false);
+                let font = extra.font.get();
+                set_font(wnd, font, false);
 
-                try!(set_window_long_ptr(wnd, 0, extra_ptr));
+                try!(set_window_long_ptr(wnd, GWLP_USERDATA, extra_ptr));
             }
 
             Ok(0)
@@ -179,7 +186,7 @@ fn try_wnd_proc(wnd: HWND, message: UINT, w_param: WPARAM, l_param: LPARAM) -> i
             // Drop extra window data.
             wui_ok_or_warn! {
                 unsafe {
-                    let extra_ptr = try!(set_window_long_ptr(wnd, 0, ptr::null::<WndExtra>()));
+                    let extra_ptr = try!(set_window_long_ptr(wnd, GWLP_USERDATA, ptr::null::<WndExtra>()));
 
                     if extra_ptr.is_null () {
                         return other_error("cannot delete WndExtra: window long was zero");
