@@ -1,6 +1,7 @@
 use std::ops::BitOr;
 use winapi::*;
-use super::wnd::WndStyle;
+use ::traits::AsRaw;
+use super::wnd::{WndBuilder, WndStyle};
 
 const SS_LEFT: DWORD = 0x00000000;
 const SS_CENTER: DWORD = 0x00000001;
@@ -77,5 +78,16 @@ impl BitOr<StaticStyle> for WndStyle {
 
     fn bitor(self, other: StaticStyle) -> WndStyle {
         self | WndStyle::from_bits(other.bits)
+    }
+}
+
+pub enum Static {}
+
+impl Static {
+    pub fn new<'a, Wnd>(wnd_parent: Wnd) -> WndBuilder<'a>
+    where Wnd: AsRaw<Raw=HWND> {
+        super::wnd::Wnd::new()
+            .class_name("STATIC")
+            .wnd_parent(wnd_parent)
     }
 }

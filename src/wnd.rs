@@ -231,13 +231,6 @@ impl<'a> WndBuilder<'a> {
         }
     }
 
-    pub fn button_id(self, value: u16) -> Self {
-        WndBuilder {
-            menu: Some(value as usize as HMENU),
-            ..self
-        }
-    }
-
     pub fn param<T>(self, param: *mut T) -> Self {
         WndBuilder {
             param: Some(param as LPVOID),
@@ -285,6 +278,18 @@ where W: AsRaw<Raw=HWND>
         0 if kernel32::GetLastError() == 0 => Ok(0usize as *const T),
         0 => last_error(),
         v => Ok(v as *const T)
+    }
+}
+
+pub unsafe fn send_message<W>(wnd: W, msg: UINT, w_param: WPARAM, l_param: LPARAM) -> io::Result<LRESULT>
+where W: AsRaw<Raw=HWND> {
+    let wnd = wnd.as_raw();
+    kernel32::SetLastError(0);
+    let result = user32::SendMessageW(wnd, msg, w_param, l_param);
+    if kernel32::GetLastError() != 0 {
+        last_error()
+    } else {
+        Ok(result)
     }
 }
 

@@ -5,6 +5,7 @@ use user32;
 use winapi::*;
 use ::last_error;
 use ::traits::AsRaw;
+use ::util::WCString;
 use super::wnd::Wnd;
 
 pub trait MsgExt: Sized {
@@ -58,6 +59,17 @@ impl MsgExt for MSG {
                 0 => false,
                 _ => true
             }
+        }
+    }
+}
+
+pub fn register_window_message(string: &str) -> io::Result<UINT> {
+    unsafe {
+        let string = WCString::from(string);
+        let string = string.as_ptr();
+        match user32::RegisterWindowMessageW(string) {
+            0 => last_error(),
+            v => Ok(v)
         }
     }
 }

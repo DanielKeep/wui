@@ -3,11 +3,20 @@ use winapi::*;
 
 #[cfg(debug_assertions)]
 macro_rules! lookup_table {
-    ($fn_name:ident: $in_ty:ty { $($name:ident,)* }) => {
-        fn $fn_name(value: $in_ty) -> Option<&'static str> {
+    ($fn_name:ident/$fn_rev:ident: $in_ty:ty { $($name:ident,)* }) => {
+        pub fn $fn_name(value: $in_ty) -> Option<&'static str> {
             match value {
                 $(
                     $name => Some(stringify!($name)),
+                )*
+                _ => None
+            }
+        }
+
+        pub fn $fn_rev(name: &str) -> Option<$in_ty> {
+            match name {
+                $(
+                    stringify!($name) => Some($name),
                 )*
                 _ => None
             }
@@ -18,15 +27,20 @@ macro_rules! lookup_table {
 #[cfg(not(debug_assertions))]
 macro_rules! lookup_table {
     ($fn_name:ident: $in_ty:ty { $($_body:tt)* }) => {
-        fn $fn_name(value: $in_ty) -> Option<&'static str> {
+        pub fn $fn_name(value: $in_ty) -> Option<&'static str> {
             let _ = value;
+            None
+        }
+
+        pub fn $fn_rev(name: &str) -> Option<$in_ty> {
+            let _ = name;
             None
         }
     };
 }
 
 lookup_table! {
-    message_name: UINT {
+    message_name/message_num: UINT {
         WM_NULL,
         WM_CREATE,
         WM_DESTROY,

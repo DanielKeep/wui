@@ -1,6 +1,7 @@
 use std::ops::BitOr;
 use winapi::*;
-use super::wnd::WndStyle;
+use ::traits::AsRaw;
+use super::wnd::{WndBuilder, WndStyle};
 
 bitflags! {
     flags ButtonStyle, button_style: DWORD {
@@ -40,5 +41,17 @@ impl BitOr<ButtonStyle> for WndStyle {
 
     fn bitor(self, other: ButtonStyle) -> WndStyle {
         self | WndStyle::from_bits(other.bits)
+    }
+}
+
+pub enum Button {}
+
+impl Button {
+    pub fn new<'a, Wnd>(wnd_parent: Wnd, id: u16) -> WndBuilder<'a>
+    where Wnd: AsRaw<Raw=HWND> {
+        super::wnd::Wnd::new()
+            .class_name("BUTTON")
+            .wnd_parent(&wnd_parent)
+            .menu(id as usize as HMENU)
     }
 }

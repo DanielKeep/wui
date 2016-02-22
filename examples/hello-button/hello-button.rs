@@ -98,24 +98,19 @@ fn try_main() -> io::Result<()> {
         .param(extra_ptr)
         .create());
 
-    let lbl = try!(Wnd::new()
-        .class_name("STATIC")
+    let lbl = try!(Static::new(&wnd)
         .window_name("Click that over there.")
         .style(ws::Child | ws::Visible | ss::CenterImage)
         .x(10).y(10)
         .width(150).height(25)
-        .wnd_parent(&wnd)
         .create());
     unsafe { set_font(&lbl, msg_font, false); }
 
-    let btn = try!(Wnd::new()
-        .class_name("BUTTON")
+    let btn = try!(Button::new(&wnd, BTN_HELLO_ID)
         .window_name("Hello")
         .style(ws::TabStop | ws::Visible | ws::Child | bs::DefPushButton)
         .x(170).y(10)
         .width(80).height(25)
-        .wnd_parent(&wnd)
-        .button_id(BTN_HELLO_ID)
         .create());
     unsafe { set_font(&btn, msg_font, false); }
 
